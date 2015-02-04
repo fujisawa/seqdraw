@@ -20,7 +20,7 @@ getNodes ls =
 
 printSeq :: [String] -> [[String]] -> IO ()
 printSeq nodes ls = do
-  let maxNodeLen = 2 + (maximum $ map len $ concat $ map (take 3) ls)
+  let maxNodeLen = 2 + (maximum $ map len nodes)
   putStrLn $ concat $ map (centering maxNodeLen) nodes
   mapM_ (printLine nodes maxNodeLen) ls
 
