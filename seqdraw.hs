@@ -2,16 +2,47 @@
 
 import Data.List.Split (splitOn)
 import Debug.Trace (trace)
+import Text.Parsec
+import System.IO (hPutStrLn, stderr)
 
 main = do
-  ls <- getContents >>= return . map (splitOn ",") . lines
-  let nodes = getNodes ls
-  printSeq nodes ls
+  cs <- getContents
+  case parse parseSeqs "parseSeq" cs of
+    Left e  -> hPutStrLn stderr $ "parse error : " ++ show e
+    Right e -> do let nodes = getNodes e
+                  printSeq nodes e
 
-getNodes :: [[String]] -> [String]
+data Seq = SeqNodes [String] | SeqLine [String] deriving Show
+
+parseSeqs =
+  sepBy parseSeq newline
+
+parseSeq = parseNodes <|> parseLine
+
+parseNodes = do
+  string "#nodes:"
+  sepBy1 parseNode (char ',') >>= return . SeqNodes
+
+parseNode = do
+  spaces
+  x <- many1 $ noneOf "\n,"
+  return $ trim x
+
+parseLine = do
+  x <- sepBy1 parseColumn (char ',')
+  return $ SeqLine x
+
+parseColumn = do
+  spaces
+  x <- many $ noneOf ",\n"
+  return $ trim x
+
+getNodes :: [Seq] -> [String]
 getNodes ls =
   reverse $ foldl sub [] ls
-  where sub acc (a:_:b:_) =
+  where sub acc (SeqNodes es) =
+          reverse es ++ acc
+        sub acc (SeqLine (a:_:b:_)) =
           if elem a acc
           then if elem b acc
                then acc
@@ -20,14 +51,15 @@ getNodes ls =
                then a:acc
                else b:a:acc
 
-printSeq :: [String] -> [[String]] -> IO ()
+printSeq :: [String] -> [Seq] -> IO ()
 printSeq nodes ls = do
   let maxNodeLen = 2 + (maximum $ map len nodes)
   putStrLn $ concat $ map (centering maxNodeLen) nodes
   mapM_ (printLine nodes maxNodeLen) ls
 
-printLine :: [String] -> Int -> [String] -> IO ()
-printLine nodes maxNodeLen (a:c:b:_) = do
+printLine :: [String] -> Int -> Seq -> IO ()
+printLine _ _ (SeqNodes _) = return ()
+printLine nodes maxNodeLen (SeqLine (a:c:b:_)) = do
   let aIndex = indexOf a nodes
       bIndex = indexOf b nodes
       smaller = min aIndex bIndex
@@ -99,6 +131,10 @@ chunksByWidth n str =
               in if wlen' > n
                  then sub 0 "" (reverse wacc:cacc) str
                  else sub wlen' (c:wacc) cacc str
+
+trim = reverse . ltrim . reverse . ltrim
+
+ltrim = snd . break (flip notElem " \t")
 
 dprint :: Show a => a -> a
 dprint a =
