@@ -1,3 +1,5 @@
+#!/usr/bin/env runhaskell
+
 import Data.List.Split (splitOn)
 import Debug.Trace (trace)
 
