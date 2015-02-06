@@ -45,25 +45,26 @@ printLine nodes maxNodeLen (a:c:b:_) = do
               | n+1 == bIndex && aIndex<bIndex -> replicate (maxNodeLen - 1) '-' ++ ">"
               | n+1 == bIndex && aIndex>bIndex -> replicate (maxNodeLen) '-'
               | True                           -> replicate (maxNodeLen) '-'
-      printDescription c n = putStr $
-        case n < smaller || n > bigger of
-          True -> '|' : replicate (maxNodeLen - 1) ' '
-          False
-              | n == aIndex && n+1 == bIndex -> '|' : padding  (maxNodeLen - 1) c
-              | n == bIndex && n+1 == aIndex -> '|' : righting (maxNodeLen - 1) c
-              | n == aIndex && aIndex<bIndex -> '|' : padding (maxNodeLen - 1) c
-              | n == aIndex && aIndex>bIndex -> '|' : replicate (maxNodeLen - 1) ' '
-              | n == bIndex && aIndex<bIndex -> '|' : replicate (maxNodeLen - 1) ' '
-              | n == bIndex && aIndex>bIndex -> '|' : replicate (maxNodeLen - 1) ' '
-              | n+1 == aIndex && aIndex<bIndex -> '|' : replicate (maxNodeLen - 1) ' '
-              | n+1 == aIndex && aIndex>bIndex -> '|' : righting (maxNodeLen - 1) c
-              | n+1 == bIndex && aIndex<bIndex -> '|' : replicate (maxNodeLen - 1) ' '
-              | n+1 == bIndex && aIndex>bIndex -> replicate (maxNodeLen) ' '
-              | True                           ->  '|' : replicate (maxNodeLen - 1) ' '
+      printDescription c = do
+        let clen = len c
+            pos  = max 1 $ truncate $ fromIntegral (aIndex + bIndex) / 2 * fromIntegral maxNodeLen - fromIntegral clen / 2
+        case clen > (maxNodeLen * (length nodes - 1) - 4) of
+           True  -> mapM_ printDescription $ chunksByWidth (maxNodeLen * (length nodes - 1) - 4) c
+           False -> putStrLn $ reverse $ foldl (\a b -> case True of
+                                                True
+                                                    | (b < pos || b >= pos + clen) && rem b maxNodeLen == 0
+                                                        -> '|':a
+                                                    | (b < pos || b >= pos + clen)
+                                                        -> ' ':a
+                                                    | b == pos
+                                                        -> reverse c ++ a
+                                                    | True
+                                                        -> a
+                                     )
+                    (replicate (div maxNodeLen 2) ' ')
+                    [0..(maxNodeLen * (length nodes - 1))]
       printPadding n = putStr $ '|' : replicate (maxNodeLen - 1) ' '
-  putStr $ replicate (div maxNodeLen 2) ' '
-  mapM (printDescription c) $ take (length nodes) [0..]
-  putStrLn ""
+  printDescription c
   --
   putStr $ replicate (div maxNodeLen 2) ' '
   mapM_ printDirection $ take (length nodes) [0..]
@@ -95,6 +96,19 @@ len =
           if elem c [' '..'~']
           then 1
           else 2
+
+chunksByWidth :: Int -> String -> [String]
+chunksByWidth n str =
+    sub 0 [] [] str
+    where sub _ [] cacc [] =
+              reverse cacc
+          sub _ wacc cacc [] =
+              reverse $ wacc:cacc
+          sub wlen wacc cacc (c:str) =
+              let wlen' = len [c] + wlen
+              in if wlen' > n
+                 then sub 0 "" (reverse wacc:cacc) str
+                 else sub wlen' (c:wacc) cacc str
 
 dprint :: Show a => a -> a
 dprint a =
