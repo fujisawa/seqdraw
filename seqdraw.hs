@@ -32,21 +32,16 @@ printLine nodes maxNodeLen (a:c:b:_) = do
       bIndex = indexOf b nodes
       smaller = min aIndex bIndex
       bigger  = max aIndex bIndex
-      printDirection n = putStr $
-        case n < smaller || n > bigger of
-          True -> '|' : replicate (maxNodeLen - 1) ' '
-          False
-              | n == aIndex && n+1 == bIndex -> '|' : replicate (maxNodeLen - 2) '-' ++ ">"
-              | n == bIndex && n+1 == aIndex -> "|<" ++ replicate (maxNodeLen - 2) '-'
-              | n == aIndex && aIndex<bIndex -> '|' : replicate (maxNodeLen - 1) '-'
-              | n == aIndex && aIndex>bIndex -> '|' : replicate (maxNodeLen - 1) ' '
-              | n == bIndex && aIndex<bIndex -> '|' : replicate (maxNodeLen - 1) ' '
-              | n == bIndex && aIndex>bIndex -> "|<" ++ replicate (maxNodeLen - 2) '-'
-              | n+1 == aIndex && aIndex<bIndex -> '|' : replicate (maxNodeLen - 1) ' '
-              | n+1 == aIndex && aIndex>bIndex -> replicate (maxNodeLen) '-'
-              | n+1 == bIndex && aIndex<bIndex -> replicate (maxNodeLen - 1) '-' ++ ">"
-              | n+1 == bIndex && aIndex>bIndex -> replicate (maxNodeLen) '-'
-              | True                           -> replicate (maxNodeLen) '-'
+      printDirection = do
+        let sub a n
+                | aIndex < bIndex && n == bIndex * maxNodeLen - 1          = '>':a
+                | aIndex > bIndex && n == bIndex * maxNodeLen + 1          = '<':a
+                | (n > smaller * maxNodeLen) && (n < bigger * maxNodeLen)  = '-':a
+                | rem n maxNodeLen == 0                                    = '|':a
+                | True                                                     = ' ':a
+        putStrLn $ reverse $ foldl sub
+          (replicate (div maxNodeLen 2) ' ')
+          [0..(maxNodeLen * (length nodes - 1))]
       printDescription c = do
         let clen = len c
             pos  = max 1 $ ceiling $ fromIntegral (aIndex + bIndex) / 2 * fromIntegral maxNodeLen - fromIntegral clen / 2
@@ -63,9 +58,7 @@ printLine nodes maxNodeLen (a:c:b:_) = do
       printPadding n = putStr $ '|' : replicate (maxNodeLen - 1) ' '
   printDescription c
   --
-  putStr $ replicate (div maxNodeLen 2) ' '
-  mapM_ printDirection $ take (length nodes) [0..]
-  putStrLn ""
+  printDirection
   --
   putStr $ replicate (div maxNodeLen 2) ' '
   mapM_ printPadding $ take (length nodes) [0..]
