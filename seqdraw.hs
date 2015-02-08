@@ -76,7 +76,7 @@ printLine nodes maxNodeLen (SeqLine (a:c:b:_)) = do
           [0..(maxNodeLen * (length nodes - 1))]
       printDescription c = do
         let clen = len c
-            pos  = max 1 $ ceiling $ fromIntegral (aIndex + bIndex) / 2 * fromIntegral maxNodeLen - fromIntegral clen / 2
+            pos  = min (maxNodeLen * (length nodes - 1) - clen) $ max 1 $ ceiling $ fromIntegral (aIndex + bIndex) / 2 * fromIntegral maxNodeLen - fromIntegral clen / 2
             sub a b
                 | (b < pos || b >= pos + clen) && rem b maxNodeLen == 0 = '|':a
                 | (b < pos || b >= pos + clen)                          = ' ':a
