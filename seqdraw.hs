@@ -76,17 +76,17 @@ printLine nodes maxNodeLen (SeqLine (a:c:b:_)) = do
           [0..(maxNodeLen * (length nodes - 1))]
       printDescription c = do
         let clen = len c
-            pos  = min (maxNodeLen * (length nodes - 1) - clen) $ max 1 $ ceiling $ fromIntegral (aIndex + bIndex) / 2 * fromIntegral maxNodeLen - fromIntegral clen / 2
+            pos  = min (maxNodeLen * length nodes - clen) $ max 1 $ ceiling $ fromIntegral (aIndex + bIndex) / 2 * fromIntegral maxNodeLen - fromIntegral clen / 2 + fromIntegral maxNodeLen / 2
             sub a b
-                | (b < pos || b >= pos + clen) && rem b maxNodeLen == 0 = '|':a
+                | (b < pos || b >= pos + clen) && rem b maxNodeLen == quot maxNodeLen 2 = '|':a
                 | (b < pos || b >= pos + clen)                          = ' ':a
                 | b == pos                                              = reverse c ++ a
                 | True                                                  = a
         case clen > (maxNodeLen * (length nodes - 1) - 4) of
            True  -> mapM_ printDescription $ chunksByWidth (maxNodeLen * (length nodes - 1) - 4) c
            False -> putStrLn $ reverse $ foldl sub
-                    (replicate (div maxNodeLen 2) ' ')
-                    [0..(maxNodeLen * (length nodes - 1))]
+                    ""
+                    [0..(maxNodeLen * length nodes)]
       printPadding n = putStr $ '|' : replicate (maxNodeLen - 1) ' '
   printDescription c
   --
