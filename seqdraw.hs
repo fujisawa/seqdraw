@@ -53,7 +53,7 @@ getNodes ls =
 
 printSeq :: [String] -> [Seq] -> IO ()
 printSeq nodes ls = do
-  let blockWidth = max (quot 80 $ length nodes) $ 2 + (maximum $ map width nodes)
+  let blockWidth = max (quot 40 $ length nodes) $ 2 + (maximum $ map width nodes)
   putStrLn $ concat $ map (centering blockWidth) nodes
   mapM_ (printLine nodes blockWidth) ls
 
@@ -129,7 +129,7 @@ chunksByWidth n str =
     where sub _ [] cacc [] =
               reverse cacc
           sub _ wacc cacc [] =
-              reverse $ wacc:cacc
+              reverse $ reverse wacc:cacc
           sub wwidth wacc cacc (c:str) =
               let wwidth' = width [c] + wwidth
               in if wwidth' > n
