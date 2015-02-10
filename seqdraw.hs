@@ -72,8 +72,8 @@ printLine nodes maxNodeLen (SeqLine (a:c:b:_)) = do
                 | rem n maxNodeLen == 0                                    = '|':a
                 | True                                                     = ' ':a
         putStrLn $ reverse $ foldl sub
-          (replicate (div maxNodeLen 2) ' ')
-          [0..(maxNodeLen * (length nodes - 1))]
+          ""
+          $ map (flip (-) (truncate $ fromIntegral maxNodeLen/2)) [0..(maxNodeLen * length nodes - 1)]
       printDescription c = do
         let clen = len c
             pos  = min (maxNodeLen * length nodes - clen) $ max 1 $ ceiling $ fromIntegral (aIndex + bIndex) / 2 * fromIntegral maxNodeLen - fromIntegral clen / 2 + fromIntegral maxNodeLen / 2
@@ -86,15 +86,19 @@ printLine nodes maxNodeLen (SeqLine (a:c:b:_)) = do
            True  -> mapM_ printDescription $ chunksByWidth (maxNodeLen * (length nodes - 1) - 4) c
            False -> putStrLn $ reverse $ foldl sub
                     ""
-                    [0..(maxNodeLen * length nodes)]
-      printPadding n = putStr $ '|' : replicate (maxNodeLen - 1) ' '
+                    [0..(maxNodeLen * length nodes - 1)]
+      printPadding = do
+        let sub a n
+                | rem n maxNodeLen == 0                                    = '|':a
+                | True                                                     = ' ':a
+        putStrLn $ reverse $ foldl sub
+          ""
+          $ map (flip (-) (truncate $ fromIntegral maxNodeLen/2)) [0..(maxNodeLen * length nodes - 1)]
   printDescription c
   --
   printDirection
   --
-  putStr $ replicate (div maxNodeLen 2) ' '
-  mapM_ printPadding $ take (length nodes) [0..]
-  putStrLn ""
+  printPadding
 
 indexOf :: Eq a => a -> [a] -> Int
 indexOf a al =
