@@ -53,7 +53,7 @@ getNodes ls =
 
 printSeq :: [String] -> [Seq] -> IO ()
 printSeq nodes ls = do
-  let blockWidth = 2 + (maximum $ map width nodes)
+  let blockWidth = max (quot 80 $ length nodes) $ 2 + (maximum $ map width nodes)
   putStrLn $ concat $ map (centering blockWidth) nodes
   mapM_ (printLine nodes blockWidth) ls
 
