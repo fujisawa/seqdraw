@@ -53,47 +53,47 @@ getNodes ls =
 
 printSeq :: [String] -> [Seq] -> IO ()
 printSeq nodes ls = do
-  let maxNodeLen = 2 + (maximum $ map len nodes)
-  putStrLn $ concat $ map (centering maxNodeLen) nodes
-  mapM_ (printLine nodes maxNodeLen) ls
+  let blockWidth = 2 + (maximum $ map width nodes)
+  putStrLn $ concat $ map (centering blockWidth) nodes
+  mapM_ (printLine nodes blockWidth) ls
 
 printLine :: [String] -> Int -> Seq -> IO ()
 printLine _ _ (SeqNodes _) = return ()
-printLine nodes maxNodeLen (SeqLine (a:c:b:_)) = do
+printLine nodes blockWidth (SeqLine (a:c:b:_)) = do
   let aIndex = indexOf a nodes
       bIndex = indexOf b nodes
       smaller = min aIndex bIndex
       bigger  = max aIndex bIndex
       printDirection = do
         let sub a n
-                | aIndex < bIndex && n == bIndex * maxNodeLen - 1          = '>':a
-                | aIndex > bIndex && n == bIndex * maxNodeLen + 1          = '<':a
-                | (n > smaller * maxNodeLen) && (n < bigger * maxNodeLen)  = '-':a
-                | rem n maxNodeLen == 0                                    = '|':a
+                | aIndex < bIndex && n == bIndex * blockWidth - 1          = '>':a
+                | aIndex > bIndex && n == bIndex * blockWidth + 1          = '<':a
+                | (n > smaller * blockWidth) && (n < bigger * blockWidth)  = '-':a
+                | rem n blockWidth == 0                                    = '|':a
                 | True                                                     = ' ':a
         putStrLn $ reverse $ foldl sub
           ""
-          $ map (flip (-) (truncate $ fromIntegral maxNodeLen/2)) [0..(maxNodeLen * length nodes - 1)]
+          $ map (flip (-) (truncate $ fromIntegral blockWidth/2)) [0..(blockWidth * length nodes - 1)]
       printDescription c = do
-        let clen = len c
-            pos  = min (maxNodeLen * length nodes - clen) $ max 1 $ ceiling $ fromIntegral (aIndex + bIndex) / 2 * fromIntegral maxNodeLen - fromIntegral clen / 2 + fromIntegral maxNodeLen / 2
+        let cwidth = width c
+            pos  = min (blockWidth * length nodes - cwidth) $ max 1 $ ceiling $ fromIntegral (aIndex + bIndex) / 2 * fromIntegral blockWidth - fromIntegral cwidth / 2 + fromIntegral blockWidth / 2
             sub a b
-                | (b < pos || b >= pos + clen) && rem b maxNodeLen == quot maxNodeLen 2 = '|':a
-                | (b < pos || b >= pos + clen)                          = ' ':a
+                | (b < pos || b >= pos + cwidth) && rem b blockWidth == quot blockWidth 2 = '|':a
+                | (b < pos || b >= pos + cwidth)                          = ' ':a
                 | b == pos                                              = reverse c ++ a
                 | True                                                  = a
-        case clen > (maxNodeLen * (length nodes - 1) - 4) of
-           True  -> mapM_ printDescription $ chunksByWidth (maxNodeLen * (length nodes - 1) - 4) c
+        case cwidth > (blockWidth * (length nodes - 1) - 4) of
+           True  -> mapM_ printDescription $ chunksByWidth (blockWidth * (length nodes - 1) - 4) c
            False -> putStrLn $ reverse $ foldl sub
                     ""
-                    [0..(maxNodeLen * length nodes - 1)]
+                    [0..(blockWidth * length nodes - 1)]
       printPadding = do
         let sub a n
-                | rem n maxNodeLen == 0                                    = '|':a
+                | rem n blockWidth == 0                                    = '|':a
                 | True                                                     = ' ':a
         putStrLn $ reverse $ foldl sub
           ""
-          $ map (flip (-) (truncate $ fromIntegral maxNodeLen/2)) [0..(maxNodeLen * length nodes - 1)]
+          $ map (flip (-) (truncate $ fromIntegral blockWidth/2)) [0..(blockWidth * length nodes - 1)]
   printDescription c
   --
   printDirection
@@ -105,20 +105,20 @@ indexOf a al =
     let (m1, m2) = break (a ==) al
     in length m1
 
-padding plen w =
-  w ++ replicate (plen - len w) ' '
+padding pwidth w =
+  w ++ replicate (pwidth - width w) ' '
 
-righting plen w =
-  replicate (plen - len w) ' ' ++ w
+righting pwidth w =
+  replicate (pwidth - width w) ' ' ++ w
 
-centering plen w =
-    let flen = div (plen - len w) 2
-        blen = plen - len w - flen
-    in replicate flen ' ' ++ w ++ replicate blen ' '
+centering pwidth w =
+    let fwidth = div (pwidth - width w) 2
+        bwidth = pwidth - width w - fwidth
+    in replicate fwidth ' ' ++ w ++ replicate bwidth ' '
 
-len =
-  sum . map charLen
-  where charLen c =
+width =
+  sum . map charWidth
+  where charWidth c =
           if elem c [' '..'~']
           then 1
           else 2
@@ -130,11 +130,11 @@ chunksByWidth n str =
               reverse cacc
           sub _ wacc cacc [] =
               reverse $ wacc:cacc
-          sub wlen wacc cacc (c:str) =
-              let wlen' = len [c] + wlen
-              in if wlen' > n
+          sub wwidth wacc cacc (c:str) =
+              let wwidth' = width [c] + wwidth
+              in if wwidth' > n
                  then sub 0 "" (reverse wacc:cacc) str
-                 else sub wlen' (c:wacc) cacc str
+                 else sub wwidth' (c:wacc) cacc str
 
 trim = reverse . ltrim . reverse . ltrim
 
