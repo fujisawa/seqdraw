@@ -133,7 +133,7 @@ chunksByWidth n str =
           sub wwidth wacc cacc (c:str) =
               let wwidth' = width [c] + wwidth
               in if wwidth' > n
-                 then sub 0 "" (reverse wacc:cacc) str
+                 then sub 0 "" (reverse wacc:cacc) $ c:str
                  else sub wwidth' (c:wacc) cacc str
 
 trim = reverse . ltrim . reverse . ltrim
