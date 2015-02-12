@@ -12,16 +12,28 @@ main = do
     Right e -> do let nodes = getNodes e
                   printSeq nodes e
 
-data Seq = SeqNodes [String] | SeqLine [String] deriving Show
+data Seq = SeqNodes [String] | SeqLine [String] | SeqIf String | SeqEndif deriving Show
 
 parseSeqs =
   sepBy parseSeq newline
 
-parseSeq = parseNodes <|> parseLine
+parseSeq = parseNodes <|> parseEndif <|> parseElif <|> parseIf <|> parseLine
 
 parseNodes = do
-  string "#nodes:"
+  try $ string "#nodes:"
   sepBy1 parseNode (char ',') >>= return . SeqNodes
+
+parseEndif = do
+  try $ string "#endif"
+  return SeqEndif
+
+parseIf = do
+  try $ string "#if:"
+  (many1 $ noneOf "\n") >>= return . SeqIf
+
+parseElif = do
+  try $ string "#elif:"
+  (many1 $ noneOf "\n") >>= return . SeqIf
 
 parseNode = do
   spaces
@@ -50,6 +62,8 @@ getNodes ls =
           else if elem b $ a:acc
                then a:acc
                else b:a:acc
+        sub acc _ =
+          acc
 
 printSeq :: [String] -> [Seq] -> IO ()
 printSeq nodes ls = do
@@ -59,6 +73,12 @@ printSeq nodes ls = do
 
 printLine :: [String] -> Int -> Seq -> IO ()
 printLine _ _ (SeqNodes _) = return ()
+printLine nodes blockWidth (SeqEndif) = do
+      let blocksWidth = blockWidth * length nodes
+      putStrLn $ replicate blocksWidth '='
+printLine nodes blockWidth (SeqIf state) = do
+      let blocksWidth = blockWidth * length nodes
+      putStrLn $ state ++ ' ' : replicate (blocksWidth - width state - 1) '='
 printLine nodes blockWidth (SeqLine (a:c:b:_)) = do
   let aIndex = indexOf a nodes
       bIndex = indexOf b nodes
