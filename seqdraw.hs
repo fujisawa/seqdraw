@@ -64,6 +64,7 @@ printLine nodes blockWidth (SeqLine (a:c:b:_)) = do
       bIndex = indexOf b nodes
       smaller = min aIndex bIndex
       bigger  = max aIndex bIndex
+      blocksWidth = blockWidth * length nodes
       printDirection = do
         let sub a n
                 | aIndex < bIndex && n == bIndex * blockWidth - 1          = '>':a
@@ -73,32 +74,42 @@ printLine nodes blockWidth (SeqLine (a:c:b:_)) = do
                 | True                                                     = ' ':a
         putStrLn $ reverse $ foldl sub
           ""
-          $ map (flip (-) (truncate $ fromIntegral blockWidth/2)) [0..(blockWidth * length nodes - 1)]
+          $ map (flip (-) (truncate $ fromIntegral blockWidth/2)) [0..(blocksWidth - 1)]
       printDescription c = do
         let cwidth = width c
-            pos  = min (blockWidth * length nodes - cwidth) $ max 1 $ ceiling $ fromIntegral (aIndex + bIndex) / 2 * fromIntegral blockWidth - fromIntegral cwidth / 2 + fromIntegral blockWidth / 2
+            pos  = min (blocksWidth - cwidth) $ max 1 $ ceiling $ fromIntegral (aIndex + bIndex) / 2 * fromIntegral blockWidth - fromIntegral cwidth / 2 + fromIntegral blockWidth / 2
             sub a b
                 | (b < pos || b >= pos + cwidth) && rem b blockWidth == quot blockWidth 2 = '|':a
                 | (b < pos || b >= pos + cwidth)                          = ' ':a
                 | b == pos                                              = reverse c ++ a
                 | True                                                  = a
-        case cwidth > (blockWidth * (length nodes - 1) - 4) of
-           True  -> mapM_ printDescription $ chunksByWidth (blockWidth * (length nodes - 1) - 4) c
+        case cwidth > (blocksWidth - 4) of
+           True  -> mapM_ printDescription $ chunksByWidth (chunkSize cwidth (blocksWidth - 4)) c
            False -> putStrLn $ reverse $ foldl sub
                     ""
-                    [0..(blockWidth * length nodes - 1)]
+                    [0..(blocksWidth - 1)]
       printPadding = do
         let sub a n
                 | rem n blockWidth == 0                                    = '|':a
                 | True                                                     = ' ':a
         putStrLn $ reverse $ foldl sub
           ""
-          $ map (flip (-) (truncate $ fromIntegral blockWidth/2)) [0..(blockWidth * length nodes - 1)]
+          $ map (flip (-) (truncate $ fromIntegral blockWidth/2)) [0..(blocksWidth - 1)]
   printDescription c
   --
   printDirection
   --
   printPadding
+
+chunkSize :: Int -> Int -> Int
+chunkSize a b =
+    fdiv a $ fdiv a b
+
+fdiv :: Int -> Int -> Int
+fdiv a b =
+    case divMod a b of
+      (d, 0) -> d
+      (d, _) -> d + 1
 
 indexOf :: Eq a => a -> [a] -> Int
 indexOf a al =
