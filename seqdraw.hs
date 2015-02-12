@@ -95,11 +95,11 @@ printLine nodes blockWidth (SeqLine (a:c:b:_)) = do
         putStrLn $ reverse $ foldl sub
           ""
           $ map (flip (-) (truncate $ fromIntegral blockWidth/2)) [0..(blocksWidth - 1)]
+  printPadding
+  --
   printDescription c
   --
   printDirection
-  --
-  printPadding
 
 chunkSize :: Int -> Int -> Int
 chunkSize a b =
