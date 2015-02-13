@@ -72,18 +72,18 @@ data DrawState = DrawState IfState deriving Show
 printSeq :: [String] -> [Seq] -> IO ()
 printSeq nodes ls = do
   let blockWidth = max (quot 80 $ length nodes) $ 2 + (maximum $ map width nodes)
-  putStrLn $ concat $ map (centering blockWidth) nodes
+  putStrLn $ ' ' : (concat $ map (centering blockWidth) nodes) ++ " "
   foldM_ (printLine nodes blockWidth) (DrawState IfOutState) ls
 
 printLine :: [String] -> Int -> DrawState -> Seq -> IO DrawState
 printLine _ _ ds (SeqNodes _) = return ds
 printLine nodes blockWidth _ (SeqEndif) = do
       let blocksWidth = blockWidth * length nodes
-      putStrLn $ '+' : replicate (blocksWidth - 1) '-' ++ "+"
+      putStrLn $ '+' : replicate (blocksWidth) '-' ++ "+"
       return $ DrawState IfOutState
 printLine nodes blockWidth _ (SeqIf state) = do
       let blocksWidth = blockWidth * length nodes
-      putStrLn $ "+- " ++ state ++ ' ' : replicate (blocksWidth - width state - 4) '-' ++ "+"
+      putStrLn $ "+- " ++ state ++ ' ' : replicate (blocksWidth - width state - 3) '-' ++ "+"
       return $ DrawState IfInState
 printLine nodes blockWidth ds@(DrawState is) (SeqLine (a:c:b:_)) = do
   let aIndex = indexOf a nodes
@@ -93,33 +93,34 @@ printLine nodes blockWidth ds@(DrawState is) (SeqLine (a:c:b:_)) = do
       blocksWidth = blockWidth * length nodes
       printDirection = do
         let sub a n'
-                | is == IfInState && (n' == 0 || n' == blocksWidth)        = '|':a
+                | is == IfInState && (n' == 0 || n' == blocksWidth+1)      = '|':a
                 | aIndex < bIndex && n == bIndex * blockWidth - 1          = '>':a
                 | aIndex > bIndex && n == bIndex * blockWidth + 1          = '<':a
                 | (n > smaller * blockWidth) && (n < bigger * blockWidth)  = '-':a
                 | rem n blockWidth == 0                                    = '|':a
                 | True                                                     = ' ':a
-                where n = n' - (truncate $ fromIntegral blockWidth/2)
-        putStrLn $ reverse $ foldl sub "" [0..blocksWidth]
+                where n = n' - (truncate $ fromIntegral blockWidth/2)-1
+        putStrLn $ reverse $ foldl sub "" [0..(blocksWidth+1)]
       printDescription c = do
         let cwidth = width c
-            pos  = min (blocksWidth - cwidth) $ max 1 $ ceiling $ fromIntegral (aIndex + bIndex) / 2 * fromIntegral blockWidth - fromIntegral cwidth / 2 + fromIntegral blockWidth / 2
-            sub a b
-                | is == IfInState && (b == 0 || b == blocksWidth)                         = '|':a
+            pos  = min (blocksWidth - cwidth - 1) $ max 1 $ ceiling $ fromIntegral (aIndex + bIndex) / 2 * fromIntegral blockWidth - fromIntegral cwidth / 2 + fromIntegral blockWidth / 2
+            sub a b'
+                | is == IfInState && (b' == 0 || b' == blocksWidth+1)                     = '|':a
                 | (b < pos || b >= pos + cwidth) && rem b blockWidth == quot blockWidth 2 = '|':a
                 | (b < pos || b >= pos + cwidth)                                          = ' ':a
                 | b == pos                                                                = reverse c ++ a
                 | True                                                                    = a
+                where b = b' - 1
         case cwidth > (blocksWidth - 4) of
            True  -> mapM_ printDescription $ chunksByWidth (chunkSize cwidth (blocksWidth - 4)) c
-           False -> putStrLn $ reverse $ foldl sub "" [0..blocksWidth]
+           False -> putStrLn $ reverse $ foldl sub "" [0..(blocksWidth+1)]
       printPadding = do
         let sub a n'
-                | is == IfInState && (n' == 0 || n' == blocksWidth)        = '|':a
+                | is == IfInState && (n' == 0 || n' == blocksWidth+1)      = '|':a
                 | rem n blockWidth == 0                                    = '|':a
                 | True                                                     = ' ':a
-                where n = n' - (truncate $ fromIntegral blockWidth/2)
-        putStrLn $ reverse $ foldl sub "" [0..blocksWidth]
+                where n = n' - (truncate $ fromIntegral blockWidth/2) -1
+        putStrLn $ reverse $ foldl sub "" [0..(blocksWidth+1)]
   printPadding
   --
   printDescription c
