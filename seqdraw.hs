@@ -111,9 +111,9 @@ printLine nodes blockWidth ds@(DrawState is) (SeqLine (a:c:b:_)) = do
                 | b == pos                                                                = reverse c ++ a
                 | True                                                                    = a
                 where b = b' - 1
-        case cwidth > (blocksWidth - 4) of
-           True  -> mapM_ printDescription $ chunksByWidth (chunkSize cwidth (blocksWidth - 4)) c
-           False -> putStrLn $ reverse $ foldl sub "" [0..(blocksWidth+1)]
+        case splitToChunks c (blocksWidth - 4) of
+           [_] -> putStrLn $ reverse $ foldl sub "" [0..(blocksWidth+1)]
+           cs  -> mapM_ printDescription cs
       printPadding = do
         let sub a n'
                 | is == IfInState && (n' == 0 || n' == blocksWidth+1)      = '|':a
@@ -134,6 +134,10 @@ printLine _ _ ds a = do
 chunkSize :: Int -> Int -> Int
 chunkSize a b =
     fdiv a $ fdiv a b
+
+splitToChunks :: String -> Int -> [String]
+splitToChunks c n =
+    concatMap (\c' -> chunksByWidth (chunkSize (width c') n) c') $ splitOn "\\n" c
 
 fdiv :: Int -> Int -> Int
 fdiv a b =
