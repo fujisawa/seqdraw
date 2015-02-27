@@ -1,19 +1,40 @@
 #!/usr/bin/env runhaskell
+{-# LANGUAGE DeriveDataTypeable #-}
 
 import Data.List.Split (splitOn)
 import Debug.Trace (trace)
 import Text.Parsec
 import System.IO (hPutStrLn, stderr)
 import Control.Monad (foldM_)
+import System.Console.CmdArgs
+
+data DrawOpt = DrawOpt {
+      divider :: String
+    } deriving (Data, Typeable, Show)
 
 main = do
+  drawOpt <- cmdArgs $ DrawOpt ","
   cs <- getContents
   case parse parseSeqs "parseSeq" cs of
     Left e  -> hPutStrLn stderr $ "parse error : " ++ show e
-    Right e -> do let nodes = getNodes e
-                  printSeq nodes e
+    Right seqs -> do let seqs' = regSeqs seqs
+                         nodes = getNodes seqs'
+                     printSeq nodes seqs'
 
 data Seq = SeqNodes [String] | SeqLine [String] | SeqIf String | SeqEndif deriving Show
+
+regSeqs :: [Seq] -> [Seq]
+regSeqs =
+    sub "" []
+    where sub :: String -> [Seq] -> [Seq] -> [Seq]
+          sub _ [] [] = []
+          sub _ acc [] = reverse acc
+          sub last acc (SeqLine ("":b:c:r):seqs) =
+              sub c (SeqLine (last:b:c:r):acc) seqs
+          sub last acc (SeqLine (a:b:c:r):seqs) =
+              sub c (SeqLine (a:b:c:r):acc) seqs
+          sub last acc (s:seqs) =
+              sub last (s:acc) seqs
 
 parseSeqs =
   sepBy parseSeq newline
